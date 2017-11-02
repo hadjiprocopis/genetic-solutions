@@ -1,0 +1,111 @@
+<project name="CompositeChromosome" default="compile" basedir=".">
+	<property environment="env" /> <!--now you can access environment variables as ${env.MYVARIABLE}-->
+
+	<property name="homeDir" value="/${env.HOME}"/>
+	<property name="baseDir" value="."/>
+	<property name="tmpDir" value="/tmp"/>
+	<property name="srcDir" value="${baseDir}/src"/>
+	<property name="javasrcDir" value="${srcDir}/java"/>
+	<property name="buildDir" value="${baseDir}/build"/>
+	<property name="exportDir" value="${baseDir}/export"/>
+	<property name="archiveDir" value="${baseDir}/archive"/>
+
+	<property name="classDir" value="${buildDir}/classes"/>
+	<property name="jarDir" value="${buildDir}/jar"/>
+	<property name="jarName" value="CompositeChromosome.jar"/>
+	<property name="MainClassName" value="Harness.Main"/>
+	<property name="exportName" value="CompositeChromosome"/>
+	<property name="java_classpath" value="/usr/local"/>
+	<property name="jgap_classpath" value="${baseDir}/3rdparty/jgap3.6.2"/>
+	<property name="commons_cli_classpath" value="${baseDir}/3rdparty/other_classes"/>
+
+	<!-- create a time stamp in variablle ${TIMESTAMP} for exports/backups -->
+	<tstamp>
+		<format property="TIMESTAMP" pattern="dd_MMM_yyyy_HH_mm_ss"/>
+	</tstamp>
+
+	<path id="classpathCompile">
+		<fileset dir="${jgap_classpath}">
+			<include name="jgap.jar"/>
+		</fileset>
+		<fileset dir="${java_classpath}">
+			<include name="apache-commons/lib/commons-cli-1.4.jar"/>
+		</fileset>
+	</path>
+
+	<path id="classpathRun" location="${classDir}">
+		<fileset dir="${jgap_classpath}">
+			<include name="jgap.jar"/>
+		</fileset>
+		<fileset dir="${commons_cli_classpath}">
+			<include name="commons-cli-1.2.jar"/>
+		</fileset>
+		<fileset dir="${jarDir}">
+			<include name="CompositeChromosome.jar"/>
+		</fileset>
+	</path>
+
+	<target name="clean">
+		<delete dir="${classDir}"/>
+		<delete file="${jarDir}/${jarName}"/>
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${classDir}" />
+		<javac srcdir="${javasrcDir}"
+			destdir="${classDir}"
+			debug="true" debuglevel="lines,vars,source"
+			classpathref="classpathCompile">
+		</javac>
+	</target>
+
+	<target name="install" depends="compile">
+		<!-- preserving file permissions -->
+		<exec executable="cp" failonerror="true">
+			<arg line="-r"/>
+			<arg line="${javasrcDir}/bin"/>
+			<arg line="${classDir}"/>
+		</exec>
+	</target>
+
+	<target name="archive" depends="export">
+		<move file="${exportDir}/${exportName}.tgz" tofile="${archiveDir}/uvcluster_${TIMESTAMP}.tgz"/>
+	</target>
+
+	<target name="export">
+		<delete file="${baseDir}/${exportName}.tgz"/>
+		<tar baseDir="${baseDir}" destfile="${tmpDir}/${exportName}.tgz" compression="gzip" excludes="**/data*.txt 3rdparty/** experimental/** archive/** export/**"/>
+		<move file="${tmpDir}/${exportName}.tgz" todir="${exportDir}"/>
+	</target>
+
+	<target name="jar" depends="compile">
+		<mkdir dir="${jarDir}" />
+		<jar destfile="${jarDir}/${jarName}" baseDir="${classDir}">
+			<manifest>
+				<attribute name="Main-Class" value="${MainClassName}"/>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="run" depends="compile">
+<!--		<java jar="${jarDir}/${jarName}" classpathref="classpathCompile" fork="true"/>-->
+		<java classname="${MainClassName}" classpathref="classpathRun" fork="true">
+			<arg value='--x1_range'/>
+			<arg value="-15.0"/>
+			<arg value="15.0"/>
+			<arg value='--x2_range'/>
+			<arg value="-15.0"/>
+			<arg value="15.0"/>
+			<arg value="--processors"/>
+			<arg value="4"/>
+			<arg value="--population"/>
+			<arg value="50"/>
+			<arg value="--evolutions"/>
+			<arg value="3"/>
+			<arg value="--maximise"/>
+			<arg value="--expression"/>
+			<arg value="(x1)^3-(x2)^2+2*(x1)*(x2)-10"/>
+		</java>
+		<!-- for the 'expression option' do not use single quote character -->
+	</target>
+</project>
