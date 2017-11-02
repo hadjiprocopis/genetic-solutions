@@ -19,10 +19,27 @@
 	<property name="jgap_classpath" value="${baseDir}/3rdparty/jgap3.6.2"/>
 	<property name="commons_cli_classpath" value="${baseDir}/3rdparty/other_classes"/>
 
-	<!-- create a time stamp in variablle ${TIMESTAMP} for exports/backups -->
+	<!-- create a time stamp in variablle ${MYTIMESTAMP} for exports/backups -->
 	<tstamp>
-		<format property="TIMESTAMP" pattern="dd_MMM_yyyy_HH_mm_ss"/>
+		<format property="MYTIMESTAMP" pattern="dd_MMM_yyyy_HH_mm_ss"/>
 	</tstamp>
+
+	<target name="git-push">
+		<exec executable="git">
+			<arg value="add"/>
+			<arg value="*"/>
+		</exec>
+		<exec executable="git">
+			<arg value="commit"/>
+			<arg value="-am"/>
+			<arg value="commit: ${MYTIMESTAMP}"/>
+		</exec>
+		<exec executable="git">
+			<arg value="push"/>
+			<arg value="git@github.com:hadjiprocopis/genetic-solutions.git"/>
+			<arg value="--all"/>
+		</exec>
+	</target>
 
 	<path id="classpathCompile">
 		<fileset dir="${jgap_classpath}">
@@ -69,7 +86,7 @@
 	</target>
 
 	<target name="archive" depends="export">
-		<move file="${exportDir}/${exportName}.tgz" tofile="${archiveDir}/uvcluster_${TIMESTAMP}.tgz"/>
+		<move file="${exportDir}/${exportName}.tgz" tofile="${archiveDir}/uvcluster_${MYTIMESTAMP}.tgz"/>
 	</target>
 
 	<target name="export">
